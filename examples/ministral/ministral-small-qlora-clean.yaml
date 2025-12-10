@@ -1,10 +1,10 @@
-base_model: mistralai/Ministral-8B-Instruct-2410
+base_model: mistralai/Ministral-3-8B-Instruct-2512
 
 # Enable to use mistral-common tokenizer
 tokenizer_use_mistral_common: true
 
 # Automatically upload checkpoint and final model to HF
-hub_model_id: pankajmathur/Ministral-8B-Instruct-2410-sft
+hub_model_id: pankajmathur/Ministral-3-8B-Instruct-2512
 
 plugins:
   - axolotl.integrations.cut_cross_entropy.CutCrossEntropyPlugin
@@ -13,9 +13,6 @@ load_in_8bit: false
 load_in_4bit: true
 
 datasets:
-  # Clean dataset with 3 problematic examples removed (empty assistant messages)
-  # Original: open-thoughts/OpenThoughts-Agent-v1-SFT (15,209 examples)
-  # Clean: pankajmathur/OpenThoughts-Agent-v1-SFT (15,206 examples)
   - path: pankajmathur/OpenThoughts-Agent-v1-SFT
     type: chat_template
     field_messages: conversations
@@ -25,7 +22,7 @@ datasets:
 
 dataset_prepared_path: /home/ubuntu/us-east-1-nano-chat-exp/dataset/last_run_prepared
 val_set_size: 0.1
-output_dir: /home/ubuntu/us-east-1-nano-chat-exp/outputs/ministral/qlora-out
+output_dir: /home/ubuntu/us-east-1-nano-chat-exp/outputs/ministral/ministral-3-8b-instruct-2512/qlora-out
 
 adapter: qlora
 lora_model_dir:
@@ -49,7 +46,7 @@ lora_target_modules:
 wandb_project: new_hope
 wandb_entity:
 wandb_watch:
-wandb_name: Ministral-8B-Instruct-2410-sft
+wandb_name: Ministral-3-8B-Instruct-2512-sft
 wandb_log_model:
 
 gradient_accumulation_steps: 4
