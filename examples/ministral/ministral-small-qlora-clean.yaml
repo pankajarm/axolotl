@@ -66,5 +66,6 @@ logging_steps: 1
 xformers_attention: true
 
 warmup_ratio: 0.1
-evals_per_epoch: 1
-saves_per_epoch: 1
+evals_per_epoch: 4
+saves_per_epoch: 4
+save_total_limit: 4
