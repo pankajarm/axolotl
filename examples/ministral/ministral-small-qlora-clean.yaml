@@ -13,7 +13,10 @@ load_in_8bit: false
 load_in_4bit: true
 
 datasets:
-  - path: open-thoughts/OpenThoughts-Agent-v1-SFT
+  # Clean dataset with 3 problematic examples removed (empty assistant messages)
+  # Original: open-thoughts/OpenThoughts-Agent-v1-SFT (15,209 examples)
+  # Clean: pankajmathur/OpenThoughts-Agent-v1-SFT (15,206 examples)
+  - path: pankajmathur/OpenThoughts-Agent-v1-SFT
     type: chat_template
     field_messages: conversations
     message_property_mappings:
@@ -62,7 +65,7 @@ tf32: false
 gradient_checkpointing: true
 resume_from_checkpoint:
 logging_steps: 1
-flash_attention: true
+sdp_attention: true
 
 warmup_ratio: 0.1
 evals_per_epoch: 1
