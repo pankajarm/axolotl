@@ -1,0 +1,105 @@
+# Ministral-3-8B-Instruct-2512 QLoRA Fine-tuning Config
+# Requires: transformers-v5 branch + Cut Cross Entropy
+#
+# Usage:
+#   source /home/ubuntu/us-east-1-nano-chat-exp/.venv-ministral3/bin/activate
+#   axolotl train examples/ministral3/ministral3-8b-qlora.yaml
+
+# =============================================================================
+# EXPERIMENT NAME (reference - update paths below if changing)
+# =============================================================================
+# exp_name: Ministral-3-8B-Instruct-2512-sft-v1
+
+# =============================================================================
+# MODEL CONFIGURATION
+# =============================================================================
+# Using BF16 version (FP8 version requires compute capability >= 8.9, A100 is 8.0)
+base_model: mistralai/Ministral-3-8B-Instruct-2512-BF16
+
+# Enable mistral-common tokenizer (required for Ministral 3)
+tokenizer_use_mistral_common: true
+
+# Automatically upload checkpoint and final model to HF
+hub_model_id: pankajmathur/Ministral-3-8B-Instruct-2512-sft-v1
+
+# Cut Cross Entropy plugin for reduced VRAM usage
+plugins:
+  - axolotl.integrations.cut_cross_entropy.CutCrossEntropyPlugin
+
+# =============================================================================
+# QUANTIZATION (QLoRA 4-bit)
+# =============================================================================
+load_in_8bit: false
+load_in_4bit: true
+
+# =============================================================================
+# DATASET CONFIGURATION
+# =============================================================================
+datasets:
+  - path: pankajmathur/OpenThoughts-Agent-v1-SFT
+    type: chat_template
+    field_messages: conversations
+    message_property_mappings:
+      role: role
+      content: content
+
+dataset_prepared_path: /home/ubuntu/us-east-1-nano-chat-exp/dataset/last_run_prepared/Ministral-3-8B-Instruct-2512-sft-v1
+val_set_size: 0.1
+output_dir: /home/ubuntu/us-east-1-nano-chat-exp/outputs/Ministral-3-8B-Instruct-2512-sft-v1/qlora-out
+
+# =============================================================================
+# ADAPTER CONFIGURATION (QLoRA)
+# =============================================================================
+adapter: qlora
+lora_model_dir:
+
+sequence_len: 16384
+sample_packing: true
+
+lora_r: 32
+lora_alpha: 16
+lora_dropout: 0.05
+lora_target_linear: true
+lora_target_modules:
+  - gate_proj
+  - down_proj
+  - up_proj
+  - q_proj
+  - v_proj
+  - k_proj
+  - o_proj
+
+# =============================================================================
+# WEIGHTS & BIASES
+# =============================================================================
+wandb_project: new_hope
+wandb_entity:
+wandb_watch:
+wandb_name: Ministral-3-8B-Instruct-2512-sft-v1
+wandb_log_model:
+
+# =============================================================================
+# TRAINING HYPERPARAMETERS
+# =============================================================================
+gradient_accumulation_steps: 16
+micro_batch_size: 1
+num_epochs: 3
+optimizer: adamw_bnb_8bit
+lr_scheduler: cosine
+learning_rate: 0.0002
+
+bf16: auto
+tf32: false
+
+gradient_checkpointing: true
+resume_from_checkpoint:
+logging_steps: 1
+flash_attention: true
+
+warmup_ratio: 0.1
+evals_per_epoch: 4
+saves_per_epoch: 4
+save_total_limit: 4
+
+# Uncomment to validate checkpoint saving works with your config
+# save_first_step: true
