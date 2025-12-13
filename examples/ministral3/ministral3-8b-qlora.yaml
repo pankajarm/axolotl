@@ -81,8 +81,9 @@ wandb_log_model:
 # =============================================================================
 # TRAINING HYPERPARAMETERS
 # =============================================================================
-gradient_accumulation_steps: 16
-micro_batch_size: 1
+# Optimized for A100 40GB - targeting ~90% VRAM utilization
+gradient_accumulation_steps: 4
+micro_batch_size: 4
 num_epochs: 3
 optimizer: adamw_bnb_8bit
 lr_scheduler: cosine
