@@ -693,13 +693,13 @@ class AxolotlTrainer(
                 ).save_pretrained(
                     output_dir,
                     state_dict=state_dict,
-                    safe_serialization=self.args.save_safetensors,
+                    safe_serialization=getattr(self.args, 'save_safetensors', True),
                 )
             else:
                 LOG.info(
                     "Trainer.model is not a `PreTrainedModel`, only saving its state dict."
                 )
-                if self.args.save_safetensors:
+                if getattr(self.args, 'save_safetensors', True):
                     safetensors.torch.save_file(
                         state_dict,
                         os.path.join(output_dir, SAFE_WEIGHTS_NAME),
@@ -711,7 +711,7 @@ class AxolotlTrainer(
             self.model.save_pretrained(
                 output_dir,
                 state_dict=state_dict,
-                safe_serialization=self.args.save_safetensors,
+                safe_serialization=getattr(self.args, 'save_safetensors', True),
                 is_main_process=self.accelerator.is_main_process,
             )
 

@@ -1,0 +1,76 @@
+# TEST CONFIG - Ministral-3-8B-Instruct-2512 QLoRA
+# Tests full pipeline: training + eval + checkpoint saving
+# Run: axolotl train examples/ministral3/ministral3-8b-qlora-test.yaml
+
+base_model: mistralai/Ministral-3-8B-Instruct-2512-BF16
+tokenizer_use_mistral_common: true
+
+plugins:
+  - axolotl.integrations.cut_cross_entropy.CutCrossEntropyPlugin
+
+load_in_8bit: false
+load_in_4bit: true
+
+datasets:
+  - path: pankajmathur/OpenThoughts-Agent-v1-SFT
+    type: chat_template
+    field_messages: conversations
+    message_property_mappings:
+      role: role
+      content: content
+
+dataset_prepared_path: /home/ubuntu/us-east-1-nano-chat-exp/dataset/last_run_prepared/Ministral-3-8B-test
+val_set_size: 0.1
+output_dir: /home/ubuntu/us-east-1-nano-chat-exp/outputs/Ministral-3-8B-test/qlora-out
+
+adapter: qlora
+lora_model_dir:
+
+sequence_len: 16384
+sample_packing: true
+
+lora_r: 32
+lora_alpha: 16
+lora_dropout: 0.05
+lora_target_linear: true
+lora_target_modules:
+  - gate_proj
+  - down_proj
+  - up_proj
+  - q_proj
+  - v_proj
+  - k_proj
+  - o_proj
+
+# Disable wandb for test
+wandb_project:
+wandb_entity:
+wandb_watch:
+wandb_name:
+wandb_log_model:
+
+# TEST: Only 50 steps with checkpoints at 20 and 40
+max_steps: 50
+gradient_accumulation_steps: 5
+micro_batch_size: 3
+
+optimizer: adamw_bnb_8bit
+lr_scheduler: cosine
+learning_rate: 0.0002
+
+bf16: auto
+tf32: false
+
+gradient_checkpointing: true
+logging_steps: 10
+flash_attention: true
+
+warmup_ratio: 0.1
+
+# Save checkpoints at step 20 and 40 to test saving
+save_steps: 20
+save_total_limit: 2
+
+# Eval at step 25 to test evaluation
+eval_steps: 25
+
