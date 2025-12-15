@@ -1,0 +1,115 @@
+# Devstral-Small-2-24B-Instruct-2512 QLoRA Fine-tuning Config
+# Based on successful Ministral-3-8B training setup
+# Requires: transformers-v5 branch + Cut Cross Entropy
+#
+# Usage:
+#   source /home/ubuntu/us-east-1-nano-chat-exp/.venv-ministral3/bin/activate
+#   axolotl train examples/devstral2/devstral-small-2-24b-qlora.yaml
+
+# =============================================================================
+# EXPERIMENT NAME
+# =============================================================================
+# exp_name: Devstral-Small-2-24B-Instruct-2512-sft-v1
+
+# =============================================================================
+# MODEL CONFIGURATION
+# =============================================================================
+# Devstral Small 2 - 24B parameter agentic coding model
+# FP8 model, will be loaded in 4-bit for QLoRA training
+base_model: mistralai/Devstral-Small-2-24B-Instruct-2512
+
+# Enable mistral-common tokenizer (required for Devstral/Ministral 3 family)
+tokenizer_use_mistral_common: true
+
+# Automatically upload checkpoint and final model to HF
+hub_model_id: pankajmathur/Devstral-Small-2-24B-Instruct-2512-sft-v1
+
+# Cut Cross Entropy plugin for reduced VRAM usage (critical for 24B model)
+plugins:
+  - axolotl.integrations.cut_cross_entropy.CutCrossEntropyPlugin
+
+# =============================================================================
+# QUANTIZATION (QLoRA 4-bit)
+# =============================================================================
+load_in_8bit: false
+load_in_4bit: true
+
+# =============================================================================
+# DATASET CONFIGURATION
+# =============================================================================
+datasets:
+  - path: pankajmathur/OpenThoughts-Agent-v1-SFT
+    type: chat_template
+    field_messages: conversations
+    message_property_mappings:
+      role: role
+      content: content
+
+dataset_prepared_path: /home/ubuntu/us-east-1-nano-chat-exp/dataset/last_run_prepared/Devstral-Small-2-24B-Instruct-2512-sft-v1
+val_set_size: 0.1
+output_dir: /home/ubuntu/us-east-1-nano-chat-exp/outputs/Devstral-Small-2-24B-Instruct-2512-sft-v1/qlora-out
+
+# =============================================================================
+# ADAPTER CONFIGURATION (QLoRA)
+# =============================================================================
+adapter: qlora
+lora_model_dir:
+
+# Reduced sequence length for 24B model memory constraints
+sequence_len: 8192
+sample_packing: true
+
+lora_r: 32
+lora_alpha: 16
+lora_dropout: 0.05
+lora_target_linear: true
+lora_target_modules:
+  - gate_proj
+  - down_proj
+  - up_proj
+  - q_proj
+  - v_proj
+  - k_proj
+  - o_proj
+
+# =============================================================================
+# WEIGHTS & BIASES
+# =============================================================================
+wandb_project: new_hope
+wandb_entity:
+wandb_watch:
+wandb_name: Devstral-Small-2-24B-Instruct-2512-sft-v1
+wandb_log_model:
+
+# =============================================================================
+# TRAINING HYPERPARAMETERS
+# =============================================================================
+# Optimized for A100 40GB with 24B model - conservative settings
+# 24B is 3x larger than 8B, so reduce batch sizes significantly
+gradient_accumulation_steps: 8
+micro_batch_size: 1
+num_epochs: 3
+optimizer: adamw_bnb_8bit
+lr_scheduler: cosine
+learning_rate: 0.0001
+
+bf16: auto
+tf32: false
+
+gradient_checkpointing: true
+resume_from_checkpoint:
+logging_steps: 1
+flash_attention: true
+
+warmup_ratio: 0.1
+evals_per_epoch: 4
+saves_per_epoch: 4
+save_total_limit: 4
+
+# Loss monitoring
+loss_watchdog_threshold: 5.0
+loss_watchdog_patience: 3
+
+# Uncomment to validate checkpoint saving works with your config
+# save_first_step: true
+
