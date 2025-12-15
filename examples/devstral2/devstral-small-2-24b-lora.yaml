@@ -1,0 +1,107 @@
+# Devstral-Small-2-24B-Instruct-2512 LoRA Fine-tuning Config
+#
+# NOTE: This model is FP8 quantized on HuggingFace, so we use LoRA (not QLoRA)
+#       The FP8 format already provides memory efficiency (~24GB for 24B params)
+#
+# Usage:
+#   source /home/ubuntu/us-east-1-nano-chat-exp/.venv-ministral3/bin/activate
+#   axolotl train examples/devstral2/devstral-small-2-24b-lora.yaml
+
+# =============================================================================
+# MODEL CONFIGURATION
+# =============================================================================
+base_model: mistralai/Devstral-Small-2-24B-Instruct-2512
+tokenizer_use_mistral_common: true
+
+# Automatically upload checkpoint and final model to HF
+hub_model_id: pankajmathur/Devstral-Small-2-24B-Instruct-2512-sft-v1
+
+# Cut Cross Entropy plugin for reduced VRAM usage
+plugins:
+  - axolotl.integrations.cut_cross_entropy.CutCrossEntropyPlugin
+
+# =============================================================================
+# NO QUANTIZATION - Model is already FP8
+# =============================================================================
+load_in_8bit: false
+load_in_4bit: false
+
+# =============================================================================
+# DATASET CONFIGURATION
+# =============================================================================
+datasets:
+  - path: pankajmathur/OpenThoughts-Agent-v1-SFT
+    type: chat_template
+    field_messages: conversations
+    message_property_mappings:
+      role: role
+      content: content
+
+dataset_prepared_path: /home/ubuntu/us-east-1-nano-chat-exp/dataset/last_run_prepared/Devstral-Small-2-24B-Instruct-2512-sft-v1
+val_set_size: 0.1
+output_dir: /home/ubuntu/us-east-1-nano-chat-exp/outputs/Devstral-Small-2-24B-Instruct-2512-sft-v1/lora-out
+
+# =============================================================================
+# ADAPTER CONFIGURATION (LoRA - not QLoRA since model is FP8)
+# =============================================================================
+adapter: lora
+lora_model_dir:
+
+# Sequence length - will be tuned based on quicktest results
+sequence_len: 8192
+sample_packing: true
+
+lora_r: 32
+lora_alpha: 16
+lora_dropout: 0.05
+lora_target_linear: true
+lora_target_modules:
+  - gate_proj
+  - down_proj
+  - up_proj
+  - q_proj
+  - v_proj
+  - k_proj
+  - o_proj
+
+# =============================================================================
+# WEIGHTS & BIASES
+# =============================================================================
+wandb_project: new_hope
+wandb_entity:
+wandb_watch:
+wandb_name: Devstral-Small-2-24B-Instruct-2512-sft-v1
+wandb_log_model:
+
+# =============================================================================
+# TRAINING HYPERPARAMETERS
+# =============================================================================
+# Will be tuned based on quicktest VRAM utilization
+# Target: ~95% VRAM usage for optimal throughput
+gradient_accumulation_steps: 8
+micro_batch_size: 1
+num_epochs: 3
+optimizer: adamw_torch
+lr_scheduler: cosine
+learning_rate: 0.0001
+
+bf16: auto
+tf32: false
+
+gradient_checkpointing: true
+resume_from_checkpoint:
+logging_steps: 1
+flash_attention: true
+
+warmup_ratio: 0.1
+evals_per_epoch: 4
+saves_per_epoch: 4
+save_total_limit: 4
+
+# Loss monitoring
+loss_watchdog_threshold: 5.0
+loss_watchdog_patience: 3
+
+# Uncomment to validate checkpoint saving works with your config
+# save_first_step: true
+
