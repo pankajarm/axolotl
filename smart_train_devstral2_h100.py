@@ -45,11 +45,12 @@ AXOLOTL_DIR = SCRIPT_DIR / "axolotl"
 VENV_PATH = AXOLOTL_DIR / ".venv-devstral2"
 LOG_DIR = SCRIPT_DIR / "logs"
 
-# Using Devstral-Small-2-24B-Instruct-2512 (FP8) - works on H100 (compute 9.0)
-QUICKTEST_CONFIG = AXOLOTL_DIR / "examples/devstral2/devstral-small-2-24b-lora-quicktest-h100.yaml"
-FULL_CONFIG = AXOLOTL_DIR / "examples/devstral2/devstral-small-2-24b-lora-h100.yaml"
-QUICKTEST_OUTPUT_DIR = SCRIPT_DIR / "outputs/Devstral-Small-2-24B-Instruct-2512-quicktest/lora-out"
-FULL_OUTPUT_DIR = SCRIPT_DIR / "outputs/Devstral-Small-2-24B-Instruct-2512-sft-v1/lora-out"
+# Using Devstral-Small-2507 (BF16) with QLoRA
+# NOTE: The FP8 model (Devstral-Small-2-24B-Instruct-2512) does not support training yet
+QUICKTEST_CONFIG = AXOLOTL_DIR / "examples/devstral2/devstral-small-2507-qlora-quicktest-h100.yaml"
+FULL_CONFIG = AXOLOTL_DIR / "examples/devstral2/devstral-small-2507-qlora-h100.yaml"
+QUICKTEST_OUTPUT_DIR = SCRIPT_DIR / "outputs/Devstral-Small-2507-quicktest/qlora-out"
+FULL_OUTPUT_DIR = SCRIPT_DIR / "outputs/Devstral-Small-2507-sft-v1/qlora-out"
 
 
 def print_header(text: str):
@@ -377,17 +378,14 @@ def main():
                         help="Proceed to full training even if quicktest fails")
     args = parser.parse_args()
     
-    print_header("Smart Training: Devstral-Small-2-24B-Instruct-2512 on H100")
-    print(f"{Colors.CYAN}Model:{Colors.ENDC} mistralai/Devstral-Small-2-24B-Instruct-2512")
-    print(f"{Colors.CYAN}Format:{Colors.ENDC} FP8 (native on H100)")
-    print(f"{Colors.CYAN}Adapter:{Colors.ENDC} LoRA (no additional quantization)")
+    print_header("Smart Training: Devstral-Small-2507 on H100")
+    print(f"{Colors.CYAN}Model:{Colors.ENDC} mistralai/Devstral-Small-2507")
+    print(f"{Colors.CYAN}Format:{Colors.ENDC} BF16 with QLoRA (4-bit)")
+    print(f"{Colors.CYAN}Adapter:{Colors.ENDC} QLoRA")
     print(f"{Colors.CYAN}Dataset:{Colors.ENDC} pankajmathur/OpenThoughts-Agent-v1-SFT")
     print()
-    
-    # Check GPU compatibility first
-    if not check_gpu_compatibility():
-        print_error("GPU does not support FP8. Use Devstral-Small-2507 (BF16) with QLoRA instead.")
-        return 1
+    print_info("Note: FP8 model (Devstral-Small-2-24B-Instruct-2512) does not support training yet")
+    print_info("Using BF16 model with QLoRA instead for full training support")
     print()
     
     if not args.skip_quicktest:
