@@ -1,0 +1,37 @@
+# Simplified config for LoRA merge (no plugins needed)
+base_model: mistralai/Devstral-Small-2507
+tokenizer_use_mistral_common: true
+
+# Required dataset config (not used for merge but required by validation)
+datasets:
+  - path: pankajmathur/OpenThoughts-Agent-v1-SFT
+    type: chat_template
+    field_messages: conversations
+    message_property_mappings:
+      role: role
+      content: content
+
+# Output directory where the LoRA adapter is stored
+output_dir: /home/ubuntu/us-east-1-nano-chat-exp/outputs/Devstral-Small-2507-sft-v1/qlora-out
+
+# Adapter configuration (must match original training)
+adapter: qlora
+lora_model_dir: /home/ubuntu/us-east-1-nano-chat-exp/outputs/Devstral-Small-2507-sft-v1/qlora-out
+
+# No quantization for merge
+load_in_8bit: false
+load_in_4bit: false
+
+# Disable flash attention for merge
+flash_attention: false
+
+# Save in safetensors format
+save_safetensors: true
+
+# Minimal required settings
+sequence_len: 8192
+bf16: auto
+
+# Required batch settings for config validation (not used for merge)
+micro_batch_size: 1
+gradient_accumulation_steps: 1
