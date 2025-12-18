@@ -1,0 +1,79 @@
+# QUICK TEST CONFIG - Ministral-3-8B QLoRA
+# ~5-10 min end-to-end test: training + checkpoint save
+# Run: axolotl train examples/ministral3/ministral3-8b-qlora-quicktest.yaml
+
+base_model: mistralai/Ministral-3-8B-Instruct-2512-BF16
+tokenizer_use_mistral_common: true
+
+plugins:
+  - axolotl.integrations.cut_cross_entropy.CutCrossEntropyPlugin
+
+load_in_8bit: false
+load_in_4bit: true
+
+datasets:
+  - path: pankajmathur/OpenThoughts-Agent-v1-SFT
+    type: chat_template
+    field_messages: conversations
+    message_property_mappings:
+      role: role
+      content: content
+
+# Use existing prepared dataset to skip preprocessing
+dataset_prepared_path: /home/ubuntu/us-east-1-nano-chat-exp/dataset/last_run_prepared/Ministral-3-8B-test
+val_set_size: 0.05
+output_dir: /home/ubuntu/us-east-1-nano-chat-exp/outputs/Ministral-3-8B-quicktest/qlora-out
+
+adapter: qlora
+lora_model_dir:
+
+sequence_len: 16384
+sample_packing: true
+
+lora_r: 32
+lora_alpha: 16
+lora_dropout: 0.05
+lora_target_linear: true
+lora_target_modules:
+  - gate_proj
+  - down_proj
+  - up_proj
+  - q_proj
+  - v_proj
+  - k_proj
+  - o_proj
+
+# Disable wandb for quick test
+wandb_project:
+
+# QUICK TEST SETTINGS (~8-10 min total):
+# - Only 5 training steps
+# - NO initial eval
+# - Save checkpoint at step 3 to test saving
+# - Eval at end (step 5)
+max_steps: 5
+gradient_accumulation_steps: 5
+micro_batch_size: 3
+
+optimizer: adamw_bnb_8bit
+lr_scheduler: cosine
+learning_rate: 0.0002
+
+bf16: auto
+tf32: false
+
+gradient_checkpointing: true
+logging_steps: 1
+flash_attention: true
+
+warmup_ratio: 0.1
+
+# Skip initial eval to save time
+eval_strategy: steps
+eval_steps: 5
+
+# Save checkpoint at step 3 to test checkpoint saving
+save_strategy: steps
+save_steps: 3
+save_total_limit: 1
+

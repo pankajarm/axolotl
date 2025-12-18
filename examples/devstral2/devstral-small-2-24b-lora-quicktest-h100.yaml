@@ -1,0 +1,106 @@
+# QUICK TEST CONFIG - Devstral-Small-2-24B-Instruct-2512 LoRA on H100
+# ~5-10 min end-to-end test: training + checkpoint save + eval
+#
+# NOTE: This model is FP8 quantized and requires compute capability >= 8.9
+#       H100 has compute capability 9.0, so it can run this model natively
+#       We use LoRA (not QLoRA) since the model is already FP8 quantized
+#
+# Run: axolotl train examples/devstral2/devstral-small-2-24b-lora-quicktest-h100.yaml
+
+# =============================================================================
+# MODEL CONFIGURATION
+# =============================================================================
+base_model: mistralai/Devstral-Small-2-24B-Instruct-2512
+tokenizer_use_mistral_common: true
+
+plugins:
+  - axolotl.integrations.cut_cross_entropy.CutCrossEntropyPlugin
+
+# =============================================================================
+# NO QUANTIZATION - Model is already FP8 quantized
+# =============================================================================
+# The FP8 format already provides memory efficiency (~24GB for 24B params)
+# Do NOT use load_in_4bit or load_in_8bit
+load_in_8bit: false
+load_in_4bit: false
+
+# =============================================================================
+# DATASET CONFIGURATION
+# =============================================================================
+datasets:
+  - path: pankajmathur/OpenThoughts-Agent-v1-SFT
+    type: chat_template
+    field_messages: conversations
+    message_property_mappings:
+      role: role
+      content: content
+
+dataset_prepared_path: /home/ubuntu/us-south-2-nano-chat-exp/dataset/last_run_prepared/Devstral-Small-2-24B-Instruct-2512-quicktest
+val_set_size: 0.05
+output_dir: /home/ubuntu/us-south-2-nano-chat-exp/outputs/Devstral-Small-2-24B-Instruct-2512-quicktest/lora-out
+
+# =============================================================================
+# ADAPTER CONFIGURATION (LoRA - not QLoRA since model is FP8)
+# =============================================================================
+adapter: lora
+lora_model_dir:
+
+# Reduced sequence length for quicktest
+sequence_len: 4096
+sample_packing: true
+
+lora_r: 16
+lora_alpha: 32
+lora_dropout: 0.05
+lora_target_linear: true
+lora_target_modules:
+  - gate_proj
+  - down_proj
+  - up_proj
+  - q_proj
+  - v_proj
+  - k_proj
+  - o_proj
+
+# =============================================================================
+# WEIGHTS & BIASES - Enable for quicktest validation
+# =============================================================================
+wandb_project: new_hope
+wandb_name: Devstral-Small-2-24B-Instruct-2512-quicktest-h100
+
+# =============================================================================
+# QUICK TEST SETTINGS (~5-10 min total):
+# - Only 5 training steps
+# - Save checkpoint at step 3 to test saving
+# - Eval at end (step 5)
+# =============================================================================
+max_steps: 5
+gradient_accumulation_steps: 4
+micro_batch_size: 1
+
+optimizer: adamw_torch
+lr_scheduler: cosine
+learning_rate: 0.0001
+
+bf16: auto
+tf32: false
+
+gradient_checkpointing: true
+logging_steps: 1
+flash_attention: true
+
+warmup_ratio: 0.1
+
+# Eval strategy
+eval_strategy: steps
+eval_steps: 5
+
+# Save checkpoint at step 3 to test checkpoint saving
+save_strategy: steps
+save_steps: 3
+save_total_limit: 1
+
+# Loss monitoring
+loss_watchdog_threshold: 5.0
+loss_watchdog_patience: 3
+
